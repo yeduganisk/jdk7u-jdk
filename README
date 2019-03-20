@@ -1,29 +1,103 @@
-README:
-  This file should be located at the top of the jdk Mercurial repository.
 
-  See http://openjdk.java.net/ for more information about the OpenJDK.
+DX Systems 
+APIgee Design Document
 
-Simple Build Instructions:
+ 
+PURPOSE	3
+DEVELOPMENT STANDARDS	3
+	Comments and Documentation	3
+	Naming Conventions	3
+DESIGN CONSIDERATIONS	4
+	Response Caching	4
+	Custom code	4
+	Error Handling	4
+	Fault Handling	4
+	Message Logging	5
+	API Proxy Chaining	5
+	Developer Portal	5
+	Service virtualization	5
+	Security	5
+	Encryption	5
+ 
 
-  1. Download and install a JDK 6 from
-     http://java.sun.com/javase/downloads/index.jsp
-     Set the environment variable ALT_BOOTDIR to the location of this JDK 6.
+PURPOSE
+The purpose of this document is to provide a set of standards and guidelines for developing Apigee Proxy within the DX Systems Team.
+DEVELOPMENT STANDARDS 
 
-  2. Either download and install the latest JDK7 from
-     http://download.java.net/openjdk/jdk7/, or build your own complete
-     OpenJDK7 by using the top level Makefile in the OpenJDK Mercurial forest.
-     Set the environment variable ALT_JDK_IMPORT_PATH to the location of
-     this latest JDK7 or OpenJDK7 build.
-     
-  3. Check the sanity of doing a build with the current machine:
-       cd make && gnumake sanity
-     See README-builds.html if you run into problems.
-  
-  4. Do a partial build of the jdk:
-       cd make && gnumake all
-  
-  5. Construct the images:
-       cd make && gnumake images
-     The resulting JDK image should be found in build/*/j2sdk-image
+	Comments and Documentation 
+o	Provide inline comments in the Proxy Endpoint and Target Endpoint configurations. Comments should enhance readability for a Flow, especially where policy file names are not sufficiently descriptive to express the underlying functionality of the Flow. 
 
+o	The PreFlow proxy endpoint should contain the below comments in the description section.
 
+    <Description>
+    <!-- 
+    
+    Developer Name:
+    Story Number:
+    Product Name:
+    
+    -->
+    
+    </Description>
+    
+o	Make comments useful. Avoid obvious comments. 
+o	Use consistent indentation, spacing, vertical alignment, etc. 
+
+	Naming Conventions
+
+o	The Policy name attribute and the XML policy file name must be identical.
+o	The Script and ServiceCallout policy name attribute and the name of the resource file should be identical.
+o	DisplayName should accurately describe the policy’s function to someone who has never worked with that API proxy before..
+o	Name policies according to their function, for example AssignTargetAuthHeader or AssignMessage.TargetAuthHeader, RaiseFault.InvalidUser.
+o	Use proper extensions for resource files, .js for JavaScript, .py for python, and .jar  for Java JAR files.
+o	Variable names should be consistent. If you choose a style, such as camelCase or under_score, use it throughout the API proxy.
+o	Use variable prefixes, where possible, to organize variables based on their purpose, for example, Consumer.username and Consumer.password.
+o	Keep your base URL simple and intuitive.
+o	Keep verbs out of your base URLs - /gettestresults , /addrecord
+o	Use HTTP verbs to operate on the collections and elements.
+DESIGN CONSIDERATIONS
+	Response Caching
+
+o	Do not populate the response cache if the response is not successful or if the request is not a GET. 
+o	Creates, updates, and deletes should not be cached. 
+
+<SkipCachePopulation>response.status.code != 200 
+or 
+request.verb != "GET"</SkipCachePopulation>
+
+o	Set appropriate cache expiration intervals to avoid dirty reads.
+o	In general, you should always keep the response cache lookup as close to the client request as possible. Conversely, you should keep the response cache population as close to the client response as possible. 
+
+	Custom code
+o	Java Script Callout will be used in the DX Systems Team APIgee Proxy.
+o	Java Callout will be used if the performance is the highest priority or the logic cannot be implemented in JavaScript
+
+	Error Handling
+o	Custom Error messages will be returned to client application in a response. The Custom Error messages will be retuned whenever the Error is returned from the API endpoint.
+	Fault Handling
+o	Leverage Fault Rules to handle all fault handling. (Raise Fault policies are used to stop message Flow and send processing to the Fault Rules Flow.)
+o	Within the Fault Rules Flow, use Assign Message policies to build the fault response, not Raise Fault policies. Conditionally execute Assign Message policies based on the fault type that occurs.
+
+	Message Logging
+o	The Message logging will be implemented in accordance to the APIgee Practice team in BCBSA and the same logging architecture will be implemented in the DX Systems APIgee Proxies.
+o	Splunk is being used as the tool for logging the Messages. 
+	API Proxy Chaining
+o	APIgee Proxy chaining will be used to call one APIgee proxy to another APIgee Proxy. 
+	Developer Portal 
+o	Create a user friendly URL and provide descriptive portal name.
+o	Users should be able to send live request to API and get the response
+o	Implement Search Engine Optimization and build a developer community 
+
+	Service virtualization
+o	Java Scripts callout will be used to add/ remove / modify the request or response being sent / received from APIgee Proxies.
+o	The below field will always be added to every Response.
+	API Version
+	Request received Datetime
+	Response generated Datetime
+	Security
+o	All the APIs will be secured using the OAuth, APIkey implementation.
+o	Whitelisting the IP address of the dev machines or environments to limit access.
+o	Always apply content protection policies (JSON and XML) to the proxies.
+
+	Encryption
+o	Client credentials and any sensitive information will be stored in the Key values Maps in APIGEE and are encrypted.
