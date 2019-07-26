@@ -1,19 +1,37 @@
-Apigee recommends running multiple instances of Edge Microgateway on different servers fronted by load balancers like NGINX.
+'use strict';
+var debug = require('debug')
 
-Plugins must be written in Node.js.
+module.exports.init = function(config, logger, stats) {
 
-If you attach regular Apigee Edge policies to "microgateway-aware" proxies in Apigee Edge, they are ignored.
+  return {
+	
+	onrequest: function(req, res, next) {
+      debug('plugin onrequest');
+	  var creds = req.headers['creds'];     
+	  console.log(req.headers);
+	  delete req.headers['creds'];
+	  delete req.headers['authorization'];
+	  req.headers['Authorization'] = creds;
+	  console.log(req.headers);
+      next();
+    }
+    } 
+  };
+}
 
-Edge Microgateway-aware proxies must point to an HTTP target endpoint. In other words, the TargetEndpoint for the proxy must include an HTTPTargetConnection. Edge Microgateway is not designed to work with proxies that use the ScriptTarget element to point to Node.js applications as backend targets.
 
+example:
 
-Edge Microgateway-aware proxies provide Edge  Edge Microgateway-aware proxies must point to an HTTP target endpoint. In other words, the TargetEndpoint for the proxy must include an HTTPTargetConnection. Edge Microgateway is not designed to work with proxies that use the ScriptTarget element to point to Node.js applications as backend targets. See also Endpoint properties reference and Specify the Node.js target with ScriptTarget.
+{ host: 'localhost:8000',
+  'user-agent': 'curl/7.55.1',
+  accept: '*/*',
+  creds: 'test',
+  authorization: 'oldValue',
+  client_received_start_timestamp: 1564078845009 }
+{ host: 'localhost:8000',
+  'user-agent': 'curl/7.55.1',
+  accept: '*/*',
+  client_received_start_timestamp: 1564078845009,
+  Authorization: 'test' }
 
-The characteristics of Edge Microgateway-aware proxies include:
-
-Micro-aware proxies provide Edge Microgateway with two key pieces of information: a base path and target URL.
-
-Micro-aware proxies must point to HTTP target endpoints. The backend target cannot be a Node.js app referenced by a ScriptTarget element in the TargetEndpoint definition. See the preceding note for more information
-Edge Microgateway proxies cannot be traced using the Apigee Edge Trace tool.
-
-Edge Microgateway does not invoke regular Edge API proxies. An access token generated for Edge Microgateway cannot be used to invoke Edge proxies protected by the OAuthV2 policy. Conversely, access token granted to access Edge proxies cannot be used to access APIs called through Edge Microgateway.
+C:\Users\Venkatesh>curl -i http://localhost:8000/sample -H "creds":"test" -H "Authorization":"oldValue"
